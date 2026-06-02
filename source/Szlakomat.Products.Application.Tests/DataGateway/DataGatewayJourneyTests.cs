@@ -1,14 +1,17 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Szlakomat.Products.Application.DataGateway;
+using Szlakomat.Products.Application.DataGateway.Common;
 using Szlakomat.Products.Application.DataGateway.GetAttractionData;
+using Szlakomat.Products.Domain.Common;
 using Szlakomat.Products.Infrastructure;
-using Szlakomat.Products.Infrastructure.DataGateway;
 
 namespace Szlakomat.Products.Application.Tests.DataGateway;
 
 /// <summary>
 /// Journey: developer sends a data query through the gateway and observes routing outcomes.
+/// FakeDataGateway is used — no real RabbitMQ connection required.
 /// </summary>
 public class DataGatewayJourneyTests
 {
@@ -22,17 +25,18 @@ public class DataGatewayJourneyTests
     {
         var services = new ServiceCollection();
         services.AddProductModule();
-        services.AddDataGateway(opts => opts.KnownProviders = [.. KnownProviders]);
+        services.AddSingleton(new DataGatewayOptions { KnownProviders = [.. KnownProviders] });
+        services.AddSingleton<IDataGateway>(new FakeDataGateway());
         _mediator = services.BuildServiceProvider().GetRequiredService<IMediator>();
     }
+
+    // ── brama osiągalna ──────────────────────────────────────────────────────
 
     [Fact]
     public async Task ValidKnownProvider_ReturnsNotImplementedWithRoutingKeyInMessage()
     {
-        // Arrange & Act
         var result = await _mediator.Send(new GetAttractionData("pricing", "krakow", EmptyPayload));
 
-        // Assert
         Assert.True(result.IsFailure());
         Assert.Equal("NOT_IMPLEMENTED", result.GetFailure()!.Code);
         Assert.Contains("pricing.krakow", result.GetFailure()!.Message);
@@ -41,22 +45,20 @@ public class DataGatewayJourneyTests
     [Fact]
     public async Task CaseInsensitiveInput_NormalizesToKnownProvider_ReturnsNotImplemented()
     {
-        // Arrange & Act
         var result = await _mediator.Send(new GetAttractionData("Pricing", "KRAKOW", EmptyPayload));
 
-        // Assert
         Assert.True(result.IsFailure());
         Assert.Equal("NOT_IMPLEMENTED", result.GetFailure()!.Code);
         Assert.Contains("pricing.krakow", result.GetFailure()!.Message);
     }
 
+    // ── walidacja handlera (nie dochodzi do bramy) ───────────────────────────
+
     [Fact]
     public async Task EmptyType_ReturnsValidationError()
     {
-        // Arrange & Act
         var result = await _mediator.Send(new GetAttractionData("", "krakow", EmptyPayload));
 
-        // Assert
         Assert.True(result.IsFailure());
         Assert.Equal("VALIDATION_ERROR", result.GetFailure()!.Code);
     }
@@ -64,10 +66,8 @@ public class DataGatewayJourneyTests
     [Fact]
     public async Task WhitespaceCity_ReturnsValidationError()
     {
-        // Arrange & Act
         var result = await _mediator.Send(new GetAttractionData("pricing", "   ", EmptyPayload));
 
-        // Assert
         Assert.True(result.IsFailure());
         Assert.Equal("VALIDATION_ERROR", result.GetFailure()!.Code);
     }
@@ -75,10 +75,8 @@ public class DataGatewayJourneyTests
     [Fact]
     public async Task UnknownCity_ReturnsProviderNotFound()
     {
-        // Arrange & Act
         var result = await _mediator.Send(new GetAttractionData("pricing", "gdansk", EmptyPayload));
 
-        // Assert
         Assert.True(result.IsFailure());
         Assert.Equal("PROVIDER_NOT_FOUND", result.GetFailure()!.Code);
         Assert.Contains("pricing.gdansk", result.GetFailure()!.Message);
@@ -87,11 +85,19 @@ public class DataGatewayJourneyTests
     [Fact]
     public async Task UnknownType_ReturnsProviderNotFound()
     {
-        // Arrange & Act
         var result = await _mediator.Send(new GetAttractionData("hotels", "krakow", EmptyPayload));
 
-        // Assert
         Assert.True(result.IsFailure());
         Assert.Equal("PROVIDER_NOT_FOUND", result.GetFailure()!.Code);
+    }
+
+    // ── fake bez I/O ─────────────────────────────────────────────────────────
+
+    private sealed class FakeDataGateway : IDataGateway
+    {
+        public Task<Result<ErrorInfo, QueryResponse>> Query(
+            GetAttractionData request, string routingKey, CancellationToken ct)
+            => Task.FromResult(Result<ErrorInfo, QueryResponse>.FailureOf(
+                new ErrorInfo("NOT_IMPLEMENTED", $"Fake gateway -> {routingKey}")));
     }
 }

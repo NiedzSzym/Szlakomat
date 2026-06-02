@@ -6,6 +6,7 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
     <ProjectReference Include="..\Szlakomat.Products.Domain\Szlakomat.Products.Domain.csproj" />
     <ProjectReference Include="..\Szlakomat.Products.Application\Szlakomat.Products.Application.csproj" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.*" />

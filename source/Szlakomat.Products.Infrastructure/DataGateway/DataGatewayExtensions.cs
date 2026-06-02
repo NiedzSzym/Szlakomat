@@ -12,7 +12,7 @@ public static class DataGatewayExtensions
         var options = new DataGatewayOptions();
         configure?.Invoke(options);
         services.AddSingleton(options);
-        services.AddScoped<IDataGateway, RabbitMqDataGateway>();
+        services.AddSingleton<IDataGateway, RabbitMqDataGateway>();
         return services;
     }
 }
