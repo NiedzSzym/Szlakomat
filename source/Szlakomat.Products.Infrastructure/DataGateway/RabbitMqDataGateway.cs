@@ -7,7 +7,7 @@ namespace Szlakomat.Products.Infrastructure.DataGateway;
 
 internal sealed class RabbitMqDataGateway : IDataGateway
 {
-    public Task<Result<ErrorInfo, QueryResponse>> Query(GetAttractionData request, CancellationToken ct)
+    public Task<Result<ErrorInfo, QueryResponse>> Query(GetAttractionData request, string routingKey, CancellationToken ct)
         => Task.FromResult(Result<ErrorInfo, QueryResponse>.FailureOf(
-            new ErrorInfo("NOT_IMPLEMENTED", "Brama danych jeszcze niezaimplementowana")));
+            new ErrorInfo("NOT_IMPLEMENTED", $"Routing OK -> {routingKey}; pobieranie danych w kolejnym etapie")));
 }
