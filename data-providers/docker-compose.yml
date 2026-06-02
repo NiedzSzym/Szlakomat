@@ -1,0 +1,69 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: szlakomat-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pricing-krakow:
+    build:
+      context: .
+      dockerfile: src/DataProviders.PricingProvider/Dockerfile
+    container_name: pricing-krakow
+    environment:
+      - PROVIDER_CITY=krakow
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Szkielety — podłączenie do RabbitMQ w następnym etapie
+
+  events-krakow:
+    build:
+      context: .
+      dockerfile: src/DataProviders.EventsProvider/Dockerfile
+    container_name: events-krakow
+    environment:
+      - PROVIDER_CITY=krakow
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  pricing-warszawa:
+    build:
+      context: .
+      dockerfile: src/DataProviders.PricingProvider/Dockerfile
+    container_name: pricing-warszawa
+    environment:
+      - PROVIDER_CITY=warszawa
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  events-warszawa:
+    build:
+      context: .
+      dockerfile: src/DataProviders.EventsProvider/Dockerfile
+    container_name: events-warszawa
+    environment:
+      - PROVIDER_CITY=warszawa
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped

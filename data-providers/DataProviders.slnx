@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DataProviders.EventsProvider/DataProviders.EventsProvider.csproj" />
+    <Project Path="src/DataProviders.PricingProvider/DataProviders.PricingProvider.csproj" />
+    <Project Path="src/DataProviders.Shared/DataProviders.Shared.csproj" />
+  </Folder>
+</Solution>
