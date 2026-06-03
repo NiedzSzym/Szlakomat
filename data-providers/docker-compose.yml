@@ -22,6 +22,9 @@ services:
     environment:
       - PROVIDER_CITY=krakow
       - RABBITMQ_HOST=rabbitmq
+      - MOCK_DATA_PATH=/app/mock-data/attractions.json
+    volumes:
+      - ./mock-data:/app/mock-data:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -50,6 +53,9 @@ services:
     environment:
       - PROVIDER_CITY=warszawa
       - RABBITMQ_HOST=rabbitmq
+      - MOCK_DATA_PATH=/app/mock-data/attractions.json
+    volumes:
+      - ./mock-data:/app/mock-data:ro
     depends_on:
       rabbitmq:
         condition: service_healthy

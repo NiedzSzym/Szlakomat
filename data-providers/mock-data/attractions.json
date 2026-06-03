@@ -1,0 +1,85 @@
+{
+  "krakow": {
+    "wawel-castle": {
+      "name": "Zamek Królewski na Wawelu",
+      "pricing": {
+        "currency": "PLN",
+        "prices": [
+          { "label": "Bilet normalny",  "amount": 3500 },
+          { "label": "Bilet ulgowy",    "amount": 2200 },
+          { "label": "Bilet rodzinny",  "amount": 9000 },
+          { "label": "Bilet szkolny",   "amount": 1500 }
+        ]
+      },
+      "events": {
+        "upcoming": [
+          { "title": "Noc Wawelska",      "date": "2026-07-15", "free": false },
+          { "title": "Festiwal Smoka",    "date": "2026-08-20", "free": true  }
+        ]
+      }
+    },
+    "wieliczka-salt-mine": {
+      "name": "Kopalnia Soli Wieliczka",
+      "pricing": {
+        "currency": "PLN",
+        "prices": [
+          { "label": "Trasa turystyczna — normalny",  "amount": 9900 },
+          { "label": "Trasa turystyczna — ulgowy",    "amount": 7900 },
+          { "label": "Trasa górnicza — normalny",     "amount": 20900 }
+        ]
+      },
+      "events": {
+        "upcoming": [
+          { "title": "Biennale Sztuki pod Ziemią", "date": "2026-09-01", "free": false }
+        ]
+      }
+    },
+    "kosciuszko-mound": {
+      "name": "Kopiec Kościuszki",
+      "pricing": {
+        "currency": "PLN",
+        "prices": [
+          { "label": "Bilet normalny", "amount": 1800 },
+          { "label": "Bilet ulgowy",   "amount": 1200 }
+        ]
+      },
+      "events": {
+        "upcoming": []
+      }
+    }
+  },
+  "warszawa": {
+    "lazienki-park": {
+      "name": "Łazienki Królewskie",
+      "pricing": {
+        "currency": "PLN",
+        "prices": [
+          { "label": "Pałac na Wyspie — normalny", "amount": 3000 },
+          { "label": "Pałac na Wyspie — ulgowy",   "amount": 1500 },
+          { "label": "Bilet łączony",              "amount": 4500 }
+        ]
+      },
+      "events": {
+        "upcoming": [
+          { "title": "Koncert chopinowski",   "date": "2026-07-20", "free": true  },
+          { "title": "Noc Łazienek Królewskich", "date": "2026-09-12", "free": false }
+        ]
+      }
+    },
+    "wilanow-palace": {
+      "name": "Muzeum Pałacu Króla Jana III w Wilanowie",
+      "pricing": {
+        "currency": "PLN",
+        "prices": [
+          { "label": "Bilet normalny", "amount": 3800 },
+          { "label": "Bilet ulgowy",   "amount": 2500 }
+        ]
+      },
+      "events": {
+        "upcoming": [
+          { "title": "Letni Festiwal Kwiatów", "date": "2026-08-01", "free": false }
+        ]
+      }
+    }
+  }
+}

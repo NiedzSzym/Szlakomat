@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using DataProviders.Shared.Contracts;
+using DataProviders.Shared.MockData;
 using DataProviders.Shared.Transport;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -10,14 +11,19 @@ namespace DataProviders.PricingProvider;
 public sealed class PricingConsumerService : BackgroundService
 {
     private readonly ILogger<PricingConsumerService> _logger;
+    private readonly MockDataStore _mockData;
     private readonly string _city;
     private readonly string _rabbitHost;
     private IConnection? _connection;
     private IChannel?    _channel;
 
-    public PricingConsumerService(ILogger<PricingConsumerService> logger, IConfiguration config)
+    public PricingConsumerService(
+        ILogger<PricingConsumerService> logger,
+        IConfiguration config,
+        MockDataStore mockData)
     {
         _logger     = logger;
+        _mockData   = mockData;
         _city       = (config["PROVIDER_CITY"] ?? "krakow").Trim().ToLowerInvariant();
         _rabbitHost = config["RABBITMQ_HOST"] ?? "localhost";
     }
@@ -46,7 +52,7 @@ public sealed class PricingConsumerService : BackgroundService
         }
         if (stoppingToken.IsCancellationRequested) return;
 
-        _channel    = await _connection!.CreateChannelAsync(cancellationToken: stoppingToken);
+        _channel = await _connection!.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await _channel.ExchangeDeclareAsync(
             exchange:    RabbitMqConstants.Exchange,
@@ -107,20 +113,8 @@ public sealed class PricingConsumerService : BackgroundService
 
             if (query is not null && !string.IsNullOrEmpty(replyTo))
             {
-                var response = new QueryResponse(
-                    Status: "ok",
-                    Type:   query.Type,
-                    City:   query.City,
-                    Data:   new
-                    {
-                        echo = query.Payload,
-                        note = $"stub z pricing.{_city}"
-                    },
-                    Meta: new ResponseMeta(
-                        Provider: $"pricing.{_city}",
-                        Source:   "stub"
-                    )
-                );
+                var handler  = new PricingRequestHandler(_mockData, _city);
+                var response = handler.Handle(query);
 
                 var responseBytes = JsonSerializer.SerializeToUtf8Bytes(response);
 
@@ -138,8 +132,8 @@ public sealed class PricingConsumerService : BackgroundService
                     body:            responseBytes);
 
                 _logger.LogInformation(
-                    "Odpowiedź odesłana na '{ReplyTo}'. CorrelationId={CorrId}, Provider=pricing.{City}",
-                    replyTo, corrId, _city);
+                    "Odpowiedź odesłana na '{ReplyTo}'. CorrelationId={CorrId}",
+                    replyTo, corrId);
             }
             else if (string.IsNullOrEmpty(replyTo))
             {
@@ -159,7 +153,7 @@ public sealed class PricingConsumerService : BackgroundService
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await base.StopAsync(cancellationToken);
-        if (_channel is not null)    await _channel.CloseAsync();
+        if (_channel    is not null) await _channel.CloseAsync();
         if (_connection is not null) await _connection.CloseAsync();
     }
 }
