@@ -136,6 +136,26 @@ public class EventsRequestHandlerTests : IDisposable
     }
 
     [Fact]
+    public void Handle_BrokenPayloads_NeverThrow()
+    {
+        // Weryfikuje kontrakt: każdy niepoprawny payload → VALIDATION_ERROR, nigdy wyjątek.
+        // RpcConsumerBase polega na tym, że handler nigdy nie rzuca.
+        var handler    = BuildHandler();
+        var badQueries = new[]
+        {
+            new DataQuery("events", "krakow", null),
+            Query("events", "krakow", "{}"),
+            Query("events", "krakow", """{"attractionId":""}"""),
+        };
+
+        foreach (var q in badQueries)
+        {
+            Action act = () => handler.Handle(q);
+            act.Should().NotThrow(because: $"niepoprawny payload '{q.Payload}' musi dawać VALIDATION_ERROR, nie wyjątek");
+        }
+    }
+
+    [Fact]
     public void Handle_InvalidFromDate_ReturnsValidationError()
     {
         var result = BuildHandler().Handle(

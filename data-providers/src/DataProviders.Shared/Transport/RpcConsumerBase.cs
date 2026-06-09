@@ -97,52 +97,94 @@ public abstract class RpcConsumerBase : BackgroundService
 
         try
         {
-            DataQuery? query = null;
+            // ── 1. Deserializacja ───────────────────────────────────────────────
+            // Niepoprawny JSON nie może zatrzymać konsumenta; wysyłamy błąd i ackujemy.
+            DataQuery? query;
             try
             {
                 query = JsonSerializer.Deserialize<DataQuery>(ea.Body.Span);
             }
             catch (JsonException ex)
             {
-                _logger.LogWarning(ex, "Błąd deserializacji wiadomości");
+                _logger.LogWarning(ex, "Niepoprawny JSON w wiadomości. CorrelationId={CorrId}", corrId);
+                await TryReplyErrorAsync(replyTo, corrId,
+                    "VALIDATION_ERROR", "Niepoprawny format komunikatu JSON");
+                return;
             }
 
-            if (query is not null && !string.IsNullOrEmpty(replyTo))
+            if (query is null)
             {
-                var response      = HandleRequest(query);
-                var responseBytes = JsonSerializer.SerializeToUtf8Bytes(response);
-
-                var replyProps = new BasicProperties
-                {
-                    CorrelationId = corrId,
-                    ContentType   = "application/json"
-                };
-
-                await _channel!.BasicPublishAsync(
-                    exchange:        string.Empty,
-                    routingKey:      replyTo,
-                    mandatory:       false,
-                    basicProperties: replyProps,
-                    body:            responseBytes);
-
-                _logger.LogInformation(
-                    "Odpowiedź odesłana na '{ReplyTo}'. CorrelationId={CorrId}",
-                    replyTo, corrId);
+                _logger.LogWarning("Puste ciało wiadomości. CorrelationId={CorrId}", corrId);
+                await TryReplyErrorAsync(replyTo, corrId,
+                    "VALIDATION_ERROR", "Puste ciało komunikatu");
+                return;
             }
-            else if (string.IsNullOrEmpty(replyTo))
+
+            if (string.IsNullOrEmpty(replyTo))
             {
-                _logger.LogWarning("Wiadomość bez ReplyTo — pomijam odpowiedź. CorrelationId={CorrId}", corrId);
+                _logger.LogWarning(
+                    "Wiadomość bez ReplyTo — pomijam odpowiedź. CorrelationId={CorrId}", corrId);
+                return;
             }
+
+            // ── 2. Logika biznesowa ─────────────────────────────────────────────
+            // Wyjątek z handlera nie crasha konsumenta; wysyłamy INTERNAL_ERROR.
+            object response;
+            try
+            {
+                response = HandleRequest(query);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Błąd logiki biznesowej. CorrelationId={CorrId}", corrId);
+                await ReplyAsync(replyTo, corrId,
+                    BuildError("INTERNAL_ERROR", "Błąd wewnętrzny providera"));
+                return;
+            }
+
+            await ReplyAsync(replyTo, corrId, response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Błąd obsługi wiadomości. CorrelationId={CorrId}", corrId);
+            _logger.LogError(ex, "Nieoczekiwany błąd obsługi wiadomości. CorrelationId={CorrId}", corrId);
         }
         finally
         {
+            // Zawsze ack — nigdy nie wpychamy wiadomości z powrotem do kolejki w pętli.
             await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
         }
     }
+
+    // ── helpery odpowiedzi ────────────────────────────────────────────────────
+
+    private async Task TryReplyErrorAsync(string? replyTo, string? corrId, string code, string message)
+    {
+        if (string.IsNullOrEmpty(replyTo)) return;
+        await ReplyAsync(replyTo, corrId, BuildError(code, message));
+    }
+
+    private async Task ReplyAsync(string replyTo, string? corrId, object payload)
+    {
+        var body  = JsonSerializer.SerializeToUtf8Bytes(payload);
+        var props = new BasicProperties
+        {
+            CorrelationId = corrId,
+            ContentType   = "application/json"
+        };
+        await _channel!.BasicPublishAsync(
+            exchange:        string.Empty,
+            routingKey:      replyTo,
+            mandatory:       false,
+            basicProperties: props,
+            body:            body);
+        _logger.LogInformation(
+            "Odpowiedź odesłana na '{ReplyTo}'. CorrelationId={CorrId}", replyTo, corrId);
+    }
+
+    private static ErrorResponse BuildError(string code, string message)
+        => new("error", new ErrorInfo(code, message));
+
+    // ── zatrzymanie ───────────────────────────────────────────────────────────
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {

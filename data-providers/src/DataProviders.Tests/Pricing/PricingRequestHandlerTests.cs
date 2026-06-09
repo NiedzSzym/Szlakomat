@@ -118,6 +118,27 @@ public class PricingRequestHandlerTests : IDisposable
         AssertError(result, "VALIDATION_ERROR");
     }
 
+    [Fact]
+    public void Handle_BrokenPayloads_NeverThrow()
+    {
+        // Weryfikuje kontrakt: każdy niepoprawny payload → VALIDATION_ERROR, nigdy wyjątek.
+        // RpcConsumerBase polega na tym, że handler nigdy nie rzuca.
+        var handler    = BuildHandler();
+        var badQueries = new[]
+        {
+            new DataQuery("pricing", "krakow", null),
+            Query("pricing", "krakow", "{}"),
+            Query("pricing", "krakow", """{"attractionId":""}"""),
+            Query("pricing", "krakow", """{"attractionId":"  "}"""),
+        };
+
+        foreach (var q in badQueries)
+        {
+            Action act = () => handler.Handle(q);
+            act.Should().NotThrow(because: $"niepoprawny payload '{q.Payload}' musi dawać VALIDATION_ERROR, nie wyjątek");
+        }
+    }
+
     // ── ATTRACTION_NOT_FOUND ─────────────────────────────────────────────────
 
     [Fact]
