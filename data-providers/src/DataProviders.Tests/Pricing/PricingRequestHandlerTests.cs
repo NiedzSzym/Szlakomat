@@ -29,11 +29,11 @@ public class PricingRequestHandlerTests : IDisposable
         }
         """;
 
-    private PricingRequestHandler BuildHandler(string city = "krakow")
+    private PricingRequestHandler BuildHandler()
     {
         File.WriteAllText(_tempFile, FixtureJson);
         var store = new MockDataStore(_tempFile, NullLogger<MockDataStore>.Instance);
-        return new PricingRequestHandler(store, city);
+        return new PricingRequestHandler(store);
     }
 
     public void Dispose() => File.Delete(_tempFile);
@@ -71,7 +71,7 @@ public class PricingRequestHandlerTests : IDisposable
     [Fact]
     public void Handle_KnownAttraction_MetaHasMockSourceAndCorrectProvider()
     {
-        var result = BuildHandler("krakow").Handle(
+        var result = BuildHandler().Handle(
             Query("pricing", "krakow", """{"attractionId":"wawel-castle"}"""));
 
         var response = result.Should().BeOfType<QueryResponse>().Subject;

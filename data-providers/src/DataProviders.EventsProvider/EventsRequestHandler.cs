@@ -7,13 +7,8 @@ namespace DataProviders.EventsProvider;
 internal sealed class EventsRequestHandler
 {
     private readonly MockDataStore _store;
-    private readonly string        _city;
 
-    public EventsRequestHandler(MockDataStore store, string city)
-    {
-        _store = store;
-        _city  = city;
-    }
+    public EventsRequestHandler(MockDataStore store) => _store = store;
 
     public object Handle(DataQuery query)
     {
@@ -47,10 +42,10 @@ internal sealed class EventsRequestHandler
             }
         }
 
-        var node = _store.TryGetAttraction(_city, attractionId);
+        var node = _store.TryGetAttraction(query.City, attractionId);
         if (node is null)
             return Error("ATTRACTION_NOT_FOUND",
-                $"Nie znaleziono atrakcji '{attractionId}' w '{_city}'");
+                $"Nie znaleziono atrakcji '{attractionId}' w '{query.City}'");
 
         var data = BuildEventsData(attractionId, node.Value, from, to);
         return new QueryResponse(
@@ -58,7 +53,7 @@ internal sealed class EventsRequestHandler
             Type:   query.Type,
             City:   query.City,
             Data:   data,
-            Meta:   new ResponseMeta($"events.{_city}", "mock"));
+            Meta:   new ResponseMeta($"events.{query.City}", "mock"));
     }
 
     private static string? ExtractAttractionId(JsonElement? payload)

@@ -18,8 +18,7 @@ public class DataGatewayJourneyTests
     private readonly IMediator _mediator;
     private static readonly JsonElement EmptyPayload = JsonDocument.Parse("{}").RootElement;
 
-    private static readonly string[] KnownProviders =
-        ["pricing.krakow", "events.krakow", "pricing.warszawa", "events.warszawa"];
+    private static readonly string[] KnownProviders = ["pricing", "events"];
 
     public DataGatewayJourneyTests()
     {
@@ -39,7 +38,7 @@ public class DataGatewayJourneyTests
 
         Assert.True(result.IsFailure());
         Assert.Equal("NOT_IMPLEMENTED", result.GetFailure()!.Code);
-        Assert.Contains("pricing.krakow", result.GetFailure()!.Message);
+        Assert.Contains("pricing", result.GetFailure()!.Message);
     }
 
     [Fact]
@@ -49,7 +48,18 @@ public class DataGatewayJourneyTests
 
         Assert.True(result.IsFailure());
         Assert.Equal("NOT_IMPLEMENTED", result.GetFailure()!.Code);
-        Assert.Contains("pricing.krakow", result.GetFailure()!.Message);
+        Assert.Contains("pricing", result.GetFailure()!.Message);
+    }
+
+    [Fact]
+    public async Task AnyCity_WithKnownType_ReachesGateway()
+    {
+        // Miasto nie jest częścią routing key — każde miasto dociera do providera.
+        // Walidacja istnienia miasta należy do data-providera, nie do bramy.
+        var result = await _mediator.Send(new GetAttractionData("pricing", "gdansk", EmptyPayload));
+
+        Assert.True(result.IsFailure());
+        Assert.Equal("NOT_IMPLEMENTED", result.GetFailure()!.Code);
     }
 
     // ── walidacja handlera (nie dochodzi do bramy) ───────────────────────────
@@ -70,16 +80,6 @@ public class DataGatewayJourneyTests
 
         Assert.True(result.IsFailure());
         Assert.Equal("VALIDATION_ERROR", result.GetFailure()!.Code);
-    }
-
-    [Fact]
-    public async Task UnknownCity_ReturnsProviderNotFound()
-    {
-        var result = await _mediator.Send(new GetAttractionData("pricing", "gdansk", EmptyPayload));
-
-        Assert.True(result.IsFailure());
-        Assert.Equal("PROVIDER_NOT_FOUND", result.GetFailure()!.Code);
-        Assert.Contains("pricing.gdansk", result.GetFailure()!.Message);
     }
 
     [Fact]

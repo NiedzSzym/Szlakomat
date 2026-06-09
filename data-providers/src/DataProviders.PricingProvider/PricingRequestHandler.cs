@@ -4,44 +4,30 @@ using DataProviders.Shared.MockData;
 
 namespace DataProviders.PricingProvider;
 
-/// <summary>
-/// Czysta logika obsługi zapytania cennikowego — bez zależności I/O, w pełni testowalna.
-/// </summary>
 internal sealed class PricingRequestHandler
 {
     private readonly MockDataStore _store;
-    private readonly string        _city;
 
-    public PricingRequestHandler(MockDataStore store, string city)
-    {
-        _store = store;
-        _city  = city;
-    }
+    public PricingRequestHandler(MockDataStore store) => _store = store;
 
-    /// <summary>
-    /// Zwraca <see cref="QueryResponse"/> (sukces) albo <see cref="ErrorResponse"/> (błąd).
-    /// </summary>
     public object Handle(DataQuery query)
     {
-        // 1. Wyciągnij attractionId z payloadu
         var attractionId = ExtractAttractionId(query.Payload);
         if (string.IsNullOrWhiteSpace(attractionId))
             return Error("VALIDATION_ERROR", "Pole 'attractionId' jest wymagane");
 
-        // 2. Wyszukaj atrakcję w store
-        var node = _store.TryGetAttraction(_city, attractionId);
+        var node = _store.TryGetAttraction(query.City, attractionId);
         if (node is null)
             return Error("ATTRACTION_NOT_FOUND",
-                $"Nie znaleziono atrakcji '{attractionId}' w '{_city}'");
+                $"Nie znaleziono atrakcji '{attractionId}' w '{query.City}'");
 
-        // 3. Zbuduj odpowiedź z aspektu pricing
         var data = BuildPricingData(attractionId, node.Value);
         return new QueryResponse(
             Status: "ok",
             Type:   query.Type,
             City:   query.City,
             Data:   data,
-            Meta:   new ResponseMeta($"pricing.{_city}", "mock"));
+            Meta:   new ResponseMeta($"pricing.{query.City}", "mock"));
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

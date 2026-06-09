@@ -22,7 +22,7 @@ internal sealed class GetAttractionDataHandler : IRequestHandler<GetAttractionDa
             return Task.FromResult(Result<ErrorInfo, QueryResponse>.FailureOf(
                 new ErrorInfo("VALIDATION_ERROR", "Pole 'type' i 'city' są wymagane")));
 
-        var routingKey = RoutingKey.From(request.Type, request.City);
+        var routingKey = RoutingKey.From(request.Type);
 
         if (!_options.KnownProviders.Contains(routingKey))
             return Task.FromResult(Result<ErrorInfo, QueryResponse>.FailureOf(

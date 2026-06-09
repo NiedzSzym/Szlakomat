@@ -29,11 +29,11 @@ public class EventsRequestHandlerTests : IDisposable
         }
         """;
 
-    private EventsRequestHandler BuildHandler(string city = "krakow")
+    private EventsRequestHandler BuildHandler()
     {
         File.WriteAllText(_tempFile, FixtureJson);
         var store = new MockDataStore(_tempFile, NullLogger<MockDataStore>.Instance);
-        return new EventsRequestHandler(store, city);
+        return new EventsRequestHandler(store);
     }
 
     public void Dispose() => File.Delete(_tempFile);
@@ -67,7 +67,7 @@ public class EventsRequestHandlerTests : IDisposable
     [Fact]
     public void Handle_KnownAttraction_MetaHasMockSourceAndCorrectProvider()
     {
-        var result = BuildHandler("krakow").Handle(
+        var result = BuildHandler().Handle(
             Query("events", "krakow", """{"attractionId":"wawel-castle"}"""));
 
         var response = result.Should().BeOfType<QueryResponse>().Subject;

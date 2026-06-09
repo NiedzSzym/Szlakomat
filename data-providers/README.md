@@ -1,6 +1,6 @@
 # data-providers
 
-Zestaw niezależnych Worker Service'ów odpowiadających na zapytania RPC przez RabbitMQ. Każdy serwis obsługuje jeden routing key (np. `pricing.krakow`) i odczytuje dane z lokalnego pliku JSON (mock-data).
+Zestaw niezależnych Worker Service'ów odpowiadających na zapytania RPC przez RabbitMQ. Każdy serwis obsługuje jeden typ danych (`pricing` albo `events`) dla wszystkich miast. Miasto pochodzi z treści zapytania, nie z konfiguracji kontenera.
 
 ---
 
@@ -20,13 +20,11 @@ docker compose up -d
 
 Polecenie uruchamia:
 
-| Kontener           | Routing key        | Opis                              |
-|--------------------|--------------------|-----------------------------------|
-| `rabbitmq`         | —                  | Broker (port 5672, panel 15672)   |
-| `pricing-krakow`   | `pricing.krakow`   | Cennik atrakcji — Kraków          |
-| `pricing-warszawa` | `pricing.warszawa` | Cennik atrakcji — Warszawa        |
-| `events-krakow`    | `events.krakow`    | Nadchodzące wydarzenia — Kraków   |
-| `events-warszawa`  | `events.warszawa`  | Nadchodzące wydarzenia — Warszawa |
+| Kontener              | Routing key | Opis                                    |
+|-----------------------|-------------|-----------------------------------------|
+| `rabbitmq`            | —           | Broker (port 5672, panel 15672)         |
+| `szlakomat-pricing`   | `pricing`   | Cennik atrakcji — wszystkie miasta      |
+| `szlakomat-events`    | `events`    | Nadchodzące wydarzenia — wszystkie miasta |
 
 Sprawdź stan:
 
@@ -97,14 +95,15 @@ Dodaj klucz do odpowiedniego miasta w `mock-data/attractions.json`:
 Nie ma potrzeby restartu kontenerów — plik jest montowany; wartość jest cachowana przy starcie kontenera, więc przy dodaniu nowych danych uruchom:
 
 ```bash
-docker compose restart pricing-krakow events-krakow
+docker compose restart pricing events
 ```
 
 ### Jak dodać miasto
 
 1. Dodaj klucz miasta do `mock-data/attractions.json` (np. `"gdansk": { ... }`)
-2. Dodaj dwa nowe serwisy w `docker-compose.yml` (wzór istniejących, z `PROVIDER_CITY=gdansk`)
-3. Dodaj `pricing.gdansk` i `events.gdansk` do `KnownProviders` w `appsettings.json` Szlakomatu
+2. Zrestartuj kontenery (`docker compose restart pricing events`)
+
+Nie trzeba zmieniać `docker-compose.yml` ani `appsettings.json` — miasto pochodzi z treści zapytania.
 
 ---
 
@@ -120,10 +119,13 @@ docker compose restart pricing-krakow events-krakow
            │ dziedziczą
 ┌──────────┴───────┐        ┌───────────────────────┐
 │  PricingProvider │        │   EventsProvider       │
+│  routing: pricing│        │   routing: events      │
 │  ├─ ConsumerSvc  │        │   ├─ ConsumerSvc        │
 │  └─ RequestHndlr │        │   └─ RequestHndlr       │
 └──────────────────┘        └───────────────────────┘
 ```
+
+Routing key zawiera wyłącznie typ (`pricing` / `events`). Miasto (`city`) jest częścią treści zapytania (`DataQuery.City`) i jest obsługiwane przez każdy provider dla dowolnego miasta obecnego w mock-data.
 
 ### Odporność konsumentów (RpcConsumerBase)
 

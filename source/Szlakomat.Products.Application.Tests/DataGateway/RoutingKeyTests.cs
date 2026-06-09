@@ -5,26 +5,26 @@ namespace Szlakomat.Products.Application.Tests.DataGateway;
 public class RoutingKeyTests
 {
     [Fact]
-    public void From_NormalizesUppercaseTypeAndCity()
+    public void From_NormalizesUppercaseType()
     {
-        Assert.Equal("pricing.krakow", RoutingKey.From("Pricing", "KRAKOW"));
+        Assert.Equal("pricing", RoutingKey.From("Pricing"));
     }
 
     [Fact]
     public void From_TrimsLeadingAndTrailingWhitespace()
     {
-        Assert.Equal("events.warszawa", RoutingKey.From("  events  ", "  warszawa  "));
+        Assert.Equal("events", RoutingKey.From("  events  "));
     }
 
     [Fact]
     public void From_HandlesAlreadyLowercaseInput()
     {
-        Assert.Equal("pricing.krakow", RoutingKey.From("pricing", "krakow"));
+        Assert.Equal("pricing", RoutingKey.From("pricing"));
     }
 
     [Fact]
-    public void From_CombinesTypeAndCityWithDot()
+    public void From_ReturnsTypeOnly()
     {
-        Assert.Equal("events.krakow", RoutingKey.From("EVENTS", "Krakow"));
+        Assert.Equal("events", RoutingKey.From("EVENTS"));
     }
 }

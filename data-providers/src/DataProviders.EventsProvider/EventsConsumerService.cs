@@ -9,7 +9,6 @@ namespace DataProviders.EventsProvider;
 public sealed class EventsConsumerService : RpcConsumerBase
 {
     private readonly MockDataStore _mockData;
-    private readonly string        _city;
 
     public EventsConsumerService(
         ILogger<EventsConsumerService> logger,
@@ -17,11 +16,10 @@ public sealed class EventsConsumerService : RpcConsumerBase
         MockDataStore mockData) : base(logger, config)
     {
         _mockData = mockData;
-        _city     = (config["PROVIDER_CITY"] ?? "krakow").Trim().ToLowerInvariant();
     }
 
-    protected override string RoutingKey => $"events.{_city}";
+    protected override string RoutingKey => "events";
 
     protected override object HandleRequest(DataQuery query)
-        => new EventsRequestHandler(_mockData, _city).Handle(query);
+        => new EventsRequestHandler(_mockData).Handle(query);
 }

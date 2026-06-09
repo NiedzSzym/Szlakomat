@@ -9,7 +9,6 @@ namespace DataProviders.PricingProvider;
 public sealed class PricingConsumerService : RpcConsumerBase
 {
     private readonly MockDataStore _mockData;
-    private readonly string        _city;
 
     public PricingConsumerService(
         ILogger<PricingConsumerService> logger,
@@ -17,11 +16,10 @@ public sealed class PricingConsumerService : RpcConsumerBase
         MockDataStore mockData) : base(logger, config)
     {
         _mockData = mockData;
-        _city     = (config["PROVIDER_CITY"] ?? "krakow").Trim().ToLowerInvariant();
     }
 
-    protected override string RoutingKey => $"pricing.{_city}";
+    protected override string RoutingKey => "pricing";
 
     protected override object HandleRequest(DataQuery query)
-        => new PricingRequestHandler(_mockData, _city).Handle(query);
+        => new PricingRequestHandler(_mockData).Handle(query);
 }

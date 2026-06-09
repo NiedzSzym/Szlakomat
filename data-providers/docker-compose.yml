@@ -14,13 +14,12 @@ services:
       timeout: 5s
       retries: 5
 
-  pricing-krakow:
+  pricing:
     build:
       context: .
       dockerfile: src/DataProviders.PricingProvider/Dockerfile
-    container_name: pricing-krakow
+    container_name: szlakomat-pricing
     environment:
-      - PROVIDER_CITY=krakow
       - RABBITMQ_HOST=rabbitmq
       - MOCK_DATA_PATH=/app/mock-data/attractions.json
     volumes:
@@ -30,45 +29,12 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  pricing-warszawa:
-    build:
-      context: .
-      dockerfile: src/DataProviders.PricingProvider/Dockerfile
-    container_name: pricing-warszawa
-    environment:
-      - PROVIDER_CITY=warszawa
-      - RABBITMQ_HOST=rabbitmq
-      - MOCK_DATA_PATH=/app/mock-data/attractions.json
-    volumes:
-      - ./mock-data:/app/mock-data:ro
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    restart: unless-stopped
-
-  events-krakow:
+  events:
     build:
       context: .
       dockerfile: src/DataProviders.EventsProvider/Dockerfile
-    container_name: events-krakow
+    container_name: szlakomat-events
     environment:
-      - PROVIDER_CITY=krakow
-      - RABBITMQ_HOST=rabbitmq
-      - MOCK_DATA_PATH=/app/mock-data/attractions.json
-    volumes:
-      - ./mock-data:/app/mock-data:ro
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    restart: unless-stopped
-
-  events-warszawa:
-    build:
-      context: .
-      dockerfile: src/DataProviders.EventsProvider/Dockerfile
-    container_name: events-warszawa
-    environment:
-      - PROVIDER_CITY=warszawa
       - RABBITMQ_HOST=rabbitmq
       - MOCK_DATA_PATH=/app/mock-data/attractions.json
     volumes:
