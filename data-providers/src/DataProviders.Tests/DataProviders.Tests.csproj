@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DataProviders.Shared\DataProviders.Shared.csproj" />
     <ProjectReference Include="..\DataProviders.PricingProvider\DataProviders.PricingProvider.csproj" />
+    <ProjectReference Include="..\DataProviders.EventsProvider\DataProviders.EventsProvider.csproj" />
   </ItemGroup>
 
 </Project>

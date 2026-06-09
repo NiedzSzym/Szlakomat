@@ -13,8 +13,9 @@
       },
       "events": {
         "upcoming": [
-          { "title": "Noc Wawelska",      "date": "2026-07-15", "free": false },
-          { "title": "Festiwal Smoka",    "date": "2026-08-20", "free": true  }
+          { "title": "Noc Wawelska",    "date": "2026-07-15", "free": false },
+          { "title": "Targi Letnie",    "from": "2026-07-20", "to": "2026-07-22", "free": false },
+          { "title": "Festiwal Smoka",  "date": "2026-08-20", "free": true }
         ]
       }
     },
@@ -61,8 +62,9 @@
       },
       "events": {
         "upcoming": [
-          { "title": "Koncert chopinowski",   "date": "2026-07-20", "free": true  },
-          { "title": "Noc Łazienek Królewskich", "date": "2026-09-12", "free": false }
+          { "title": "Koncert chopinowski",        "date": "2026-07-20", "free": true  },
+          { "title": "Lato w Łazienkach",          "from": "2026-07-01", "to": "2026-07-31", "free": true },
+          { "title": "Noc Łazienek Królewskich",   "date": "2026-09-12", "free": false }
         ]
       }
     },

@@ -1,26 +1,27 @@
+using DataProviders.Shared.Contracts;
+using DataProviders.Shared.MockData;
 using DataProviders.Shared.Transport;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace DataProviders.EventsProvider;
 
-// TODO: zastąpić realną implementacją RabbitMQ — wzorzec analogiczny do PricingConsumerService
-public sealed class EventsConsumerService : BackgroundService
+public sealed class EventsConsumerService : RpcConsumerBase
 {
-    private readonly ILogger<EventsConsumerService> _logger;
-    private readonly string _city;
+    private readonly MockDataStore _mockData;
+    private readonly string        _city;
 
-    public EventsConsumerService(ILogger<EventsConsumerService> logger, IConfiguration config)
+    public EventsConsumerService(
+        ILogger<EventsConsumerService> logger,
+        IConfiguration config,
+        MockDataStore mockData) : base(logger, config)
     {
-        _logger = logger;
-        _city   = (config["PROVIDER_CITY"] ?? "krakow").Trim().ToLowerInvariant();
+        _mockData = mockData;
+        _city     = (config["PROVIDER_CITY"] ?? "krakow").Trim().ToLowerInvariant();
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        var routingKey = $"events.{_city}";
-        _logger.LogInformation(
-            "EventsProvider [{RoutingKey}] szkielet uruchomiony. Exchange={Exchange}. Połączenie z RabbitMQ niezaimplementowane.",
-            routingKey, RabbitMqConstants.Exchange);
+    protected override string RoutingKey => $"events.{_city}";
 
-        await Task.Delay(Timeout.Infinite, stoppingToken);
-    }
+    protected override object HandleRequest(DataQuery query)
+        => new EventsRequestHandler(_mockData, _city).Handle(query);
 }

@@ -30,7 +30,21 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # Szkielety — podłączenie do RabbitMQ w następnym etapie
+  pricing-warszawa:
+    build:
+      context: .
+      dockerfile: src/DataProviders.PricingProvider/Dockerfile
+    container_name: pricing-warszawa
+    environment:
+      - PROVIDER_CITY=warszawa
+      - RABBITMQ_HOST=rabbitmq
+      - MOCK_DATA_PATH=/app/mock-data/attractions.json
+    volumes:
+      - ./mock-data:/app/mock-data:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
 
   events-krakow:
     build:
@@ -39,19 +53,6 @@ services:
     container_name: events-krakow
     environment:
       - PROVIDER_CITY=krakow
-      - RABBITMQ_HOST=rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    restart: unless-stopped
-
-  pricing-warszawa:
-    build:
-      context: .
-      dockerfile: src/DataProviders.PricingProvider/Dockerfile
-    container_name: pricing-warszawa
-    environment:
-      - PROVIDER_CITY=warszawa
       - RABBITMQ_HOST=rabbitmq
       - MOCK_DATA_PATH=/app/mock-data/attractions.json
     volumes:
@@ -69,6 +70,9 @@ services:
     environment:
       - PROVIDER_CITY=warszawa
       - RABBITMQ_HOST=rabbitmq
+      - MOCK_DATA_PATH=/app/mock-data/attractions.json
+    volumes:
+      - ./mock-data:/app/mock-data:ro
     depends_on:
       rabbitmq:
         condition: service_healthy

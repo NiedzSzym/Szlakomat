@@ -14,4 +14,8 @@
   <ItemGroup>
     <ProjectReference Include="..\DataProviders.Shared\DataProviders.Shared.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DataProviders.Tests" />
+  </ItemGroup>
 </Project>
