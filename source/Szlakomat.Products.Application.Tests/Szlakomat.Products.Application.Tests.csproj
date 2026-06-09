@@ -14,8 +14,10 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.*" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Szlakomat.Products.Infrastructure\Szlakomat.Products.Infrastructure.csproj" />
+    <ProjectReference Include="..\Szlakomat.Products.Api\Szlakomat.Products.Api.csproj" />
   </ItemGroup>
 </Project>

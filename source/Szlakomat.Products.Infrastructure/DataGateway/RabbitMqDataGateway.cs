@@ -93,7 +93,16 @@ internal sealed class RabbitMqDataGateway : IDataGateway, IAsyncDisposable
     public async Task<Result<ErrorInfo, QueryResponse>> Query(
         GetAttractionData request, string routingKey, CancellationToken ct)
     {
-        await EnsureInitAsync(ct);
+        try
+        {
+            await EnsureInitAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Broker niedostępny — nie ujawniaj szczegółów technicznych
+            return Result<ErrorInfo, QueryResponse>.FailureOf(
+                new ErrorInfo("INTERNAL_ERROR", "Broker komunikatów niedostępny"));
+        }
 
         var correlationId = Guid.NewGuid().ToString();
         var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -135,6 +144,12 @@ internal sealed class RabbitMqDataGateway : IDataGateway, IAsyncDisposable
             return Result<ErrorInfo, QueryResponse>.FailureOf(
                 new ErrorInfo("PROVIDER_TIMEOUT",
                     $"Brak odpowiedzi od {routingKey} w {_opts.TimeoutSeconds}s"));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Błąd publish lub inny błąd infrastruktury
+            return Result<ErrorInfo, QueryResponse>.FailureOf(
+                new ErrorInfo("INTERNAL_ERROR", "Błąd komunikacji z brokerem"));
         }
         finally
         {
